@@ -51,6 +51,7 @@ paths:
   /api/health:
     get:
       tags: [system]
+      operationId: getApiHealth
       summary: Sprawdzenie dostępności aplikacji
       description: Używane przez testy do „wybudzenia” aplikacji na darmowym hostingu.
       responses:
@@ -67,6 +68,7 @@ paths:
   /api/auth/login:
     post:
       tags: [auth]
+      operationId: login
       summary: Logowanie administratora
       requestBody:
         required: true
@@ -85,6 +87,7 @@ paths:
   /api/auth/logout:
     post:
       tags: [auth]
+      operationId: logout
       summary: Wylogowanie (unieważnienie tokenu)
       security: [ { bearerAuth: [] } ]
       responses:
@@ -94,6 +97,7 @@ paths:
   /api/auth/password:
     put:
       tags: [auth]
+      operationId: changePassword
       summary: Zmiana hasła zalogowanego administratora
       security: [ { bearerAuth: [] } ]
       requestBody:
@@ -115,6 +119,7 @@ paths:
   /api/series:
     get:
       tags: [series]
+      operationId: getAllSeries
       summary: Lista serii
       responses:
         '200':
@@ -127,6 +132,7 @@ paths:
         '406': { $ref: '#/components/responses/NotAcceptable' }
     post:
       tags: [series]
+      operationId: createSeries
       summary: Utworzenie serii
       security: [ { bearerAuth: [] } ]
       requestBody:
@@ -151,6 +157,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/SeriesId'
     get:
+      operationId: getSeriesById
       tags: [series]
       summary: Odczyt serii
       responses:
@@ -162,6 +169,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     put:
       tags: [series]
+      operationId: replaceSeries
       summary: Pełna aktualizacja serii
       description: |
         Zastępuje wszystkie edytowalne pola serii. Jeśli nowy przedział
@@ -186,6 +194,7 @@ paths:
         '422': { $ref: '#/components/responses/Unprocessable' }
     delete:
       tags: [series]
+      operationId: deleteSeries
       summary: Usunięcie serii wraz ze wszystkimi jej wynikami i przypisanymi czujnikami
       security: [ { bearerAuth: [] } ]
       responses:
@@ -196,6 +205,7 @@ paths:
   /api/measurements:
     get:
       tags: [measurements]
+      operationId: searchMeasurements
       summary: Wyniki wybranych serii w przedziale czasu
       description: |
         Zwraca wyniki posortowane rosnąco według `timestamp` (lub malejąco dla
@@ -228,6 +238,7 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
     post:
       tags: [measurements]
+      operationId: postMeasurement
       summary: Przesłanie wyniku przez czujnik
       description: |
         Jedyny sposób zapisu wyników. Wymaga klucza API czujnika w nagłówku
@@ -263,6 +274,7 @@ paths:
       - $ref: '#/components/parameters/MeasurementId'
     get:
       tags: [measurements]
+      operationId: getMeasurementById
       summary: Odczyt wyniku
       description: Wyników nie można modyfikować ani usuwać; metody PUT, PATCH i DELETE zwracają 404 lub 405.
       responses:
@@ -276,6 +288,7 @@ paths:
   /api/sensors:
     get:
       tags: [sensors]
+      operationId: getAllSensors
       summary: Lista zarejestrowanych czujników (bez kluczy API)
       security: [ { bearerAuth: [] } ]
       responses:
@@ -289,6 +302,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       tags: [sensors]
+      operationId: registerSensor
       summary: Rejestracja czujnika
       description: |
         Klucz API jest zwracany wyłącznie w tej odpowiedzi; serwer przechowuje
@@ -321,6 +335,7 @@ paths:
         schema: { $ref: '#/components/schemas/Id' }
     get:
       tags: [sensors]
+      operationId: getSensorById
       summary: Odczyt czujnika (bez klucza API)
       security: [ { bearerAuth: [] } ]
       responses:
@@ -333,6 +348,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
     delete:
       tags: [sensors]
+      operationId: deleteSensor
       summary: Wyrejestrowanie czujnika
       description: Klucz czujnika natychmiast przestaje działać; zebrane przez czujnik wyniki pozostają.
       security: [ { bearerAuth: [] } ]
@@ -378,8 +394,17 @@ components:
       type: object
       required: [username, password]
       properties:
-        username: { type: string }
-        password: { type: string, format: password }
+        username: {
+          type: string,
+          maxLength: 128,
+          minLength: 1
+        }
+        password: {
+          type: string,
+          format: password,
+          maxLength: 128,
+          minLength: 8
+        }
 
     LoginResponse:
       type: object
@@ -393,8 +418,18 @@ components:
       type: object
       required: [currentPassword, newPassword]
       properties:
-        currentPassword: { type: string, format: password }
-        newPassword: { type: string, format: password, minLength: 8 }
+        currentPassword: {
+          type: string,
+          format: password,
+          maxLength: 128,
+          minLen
+        }
+        newPassword: {
+          type: string,
+          format: password,
+          maxLength: 128,
+          minLength: 8
+        }
 
     SeriesInput:
       type: object

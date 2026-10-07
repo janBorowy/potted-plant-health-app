@@ -23,6 +23,7 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
+	implementation("org.springframework.boot:spring-boot-starter-validation")
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-data-mongodb-test")
@@ -30,12 +31,13 @@ dependencies {
 	testCompileOnly("org.projectlombok:lombok")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testAnnotationProcessor("org.projectlombok:lombok")
+	implementation("io.swagger.core.v3:swagger-annotations:2.2.30")
 }
 
 sourceSets {
 	main {
 		java {
-			srcDir("$${layout.buildDirectory.get().asFile}/generated/openapi/src/main/java")
+			srcDir("$buildDir/generated/openapi/src/main/java")
 		}
 	}
 }
@@ -52,11 +54,11 @@ openApiGenerate {
     generatorName.set("spring")
 
     inputSpec.set(
-        "$rootDir/api-specification.yaml"
+        "$projectDir/src/main/resources/api-specification.yaml"
     )
 
     outputDir.set(
-        "${layout.buildDirectory.get().asFile}/generated/openapi"
+        "$buildDir/generated/openapi"
     )
 
     apiPackage.set("pl.student.sensors.generated.api")
@@ -67,7 +69,8 @@ openApiGenerate {
             "interfaceOnly" to "true",
             "useTags" to "true",
             "skipDefaultInterface" to "true",
-            "openApiNullable" to "false"
+            "openApiNullable" to "false",
+			"useSpringBoot3" to "true"
         )
     )
 }
