@@ -7,14 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 import pl.student.sensors.generated.api.MeasurementsApi;
-import pl.student.sensors.generated.model.Id;
 import pl.student.sensors.generated.model.Measurement;
 import pl.student.sensors.generated.model.MeasurementInput;
 
 public class MeasurementsApiImpl implements MeasurementsApi {
 
     @Override
-    public ResponseEntity<Measurement> getMeasurementById(Id measurementId) {
+    public ResponseEntity<Measurement> getMeasurementById(String measurementId) {
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
     }
 

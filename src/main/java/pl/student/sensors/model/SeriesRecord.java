@@ -1,9 +1,11 @@
 package pl.student.sensors.model;
 
+import lombok.Builder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document("series")
+@Builder
 public record SeriesRecord(
         @Id String id,
         String name,
@@ -12,5 +14,4 @@ public record SeriesRecord(
         String color,
         String icon,
         String unit
-) {
-}
+) {}
