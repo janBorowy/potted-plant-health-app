@@ -41,7 +41,10 @@ public class SeriesApiImpl implements SeriesApi {
 
     @Override
     public ResponseEntity<List<Series>> getAllSeries() {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        var series = seriesService.getAllSeries().stream()
+                .map(seriesMapper::toApiResponse)
+                .toList();
+        return ResponseEntity.ok(series);
     }
 
     @Override

@@ -2,6 +2,7 @@ package pl.student.sensors.service;
 
 import com.mongodb.ErrorCategory;
 import com.mongodb.MongoWriteException;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -30,5 +31,11 @@ public class SeriesService {
             }
             throw e;
         }
+    }
+
+    public List<Series> getAllSeries() {
+        return seriesRepository.findAll().stream()
+                .map(seriesMapper::toDomain)
+                .toList();
     }
 }

@@ -1,0 +1,88 @@
+@username = admin
+@password = adminadmin
+@seriesName = TEMP_SENSOR_{{$randomInt}}
+
+### Creating a series without authentication is rejected
+POST {{baseUrl}}/api/series
+Content-Type: application/json
+
+{
+  "name": "{{seriesName}}",
+  "minValue": 0.0,
+  "maxValue": 100.0,
+  "color":"#ff0000"
+}
+
+> {%
+client.test("Unauthenticated series creation returns 401", function () {
+    client.assert(response.status === 401, "Expected 401 Unauthorized");
+});
+%}
+
+### Logging in with a password that is too short is rejected
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "short"
+}
+
+> {%
+client.test("Short login password returns 400", function () {
+    client.assert(response.status === 400, "Expected 400 Bad Request");
+});
+%}
+
+### Logging in with credentials that do not match is rejected
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "notTheAdminPassword"
+}
+
+> {%
+client.test("Incorrect credentials return 401", function () {
+    client.assert(response.status === 401, "Expected 401 Unauthorized");
+});
+%}
+
+### Logging in with valid credentials
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+> {%
+client.test("Valid login returns 200", function () {
+    client.assert(response.status === 200, "Expected 200 OK");
+    client.assert(response.body.accessToken, "Expected an access token");
+});
+client.global.set("authToken", response.body.accessToken);
+%}
+
+### Creating a series with the login token succeeds
+POST {{baseUrl}}/api/series
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "{{seriesName}}",
+  "minValue": 0.0,
+  "maxValue": 100.0,
+  "color":"#ff0000"
+}
+
+> {%
+client.test("Authenticated series creation returns 201", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+});
+client.global.set("createdSeriesName", response.body.name);
+%}
+
+### TODO: Getting all series without authentication succeeds
