@@ -42,4 +42,15 @@ public class SeriesService {
                 .map(seriesMapper::toDomain)
                 .toList();
     }
+
+    public void deleteSeries(String seriesId) {
+        if (!seriesRepository.existsById(seriesId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "series does not exist");
+        }
+        seriesRepository.deleteById(seriesId);
+    }
+
+    public void getSeriesById(String seriesId) {
+        
+    }
 }

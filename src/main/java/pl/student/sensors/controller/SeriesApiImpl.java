@@ -36,7 +36,8 @@ public class SeriesApiImpl implements SeriesApi {
 
     @Override
     public ResponseEntity<Void> deleteSeries(String seriesId) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        seriesService.deleteSeries(seriesId);
+        return ResponseEntity.noContent().build();
     }
 
     @Override

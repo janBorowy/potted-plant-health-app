@@ -17,6 +17,7 @@ import static com.atlassian.oai.validator.mockmvc.OpenApiValidationMatchers.open
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -115,6 +116,51 @@ class SeriesApiIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/series"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    void deleteSeriesReturnsUnauthorizedWhenNotLoggedIn() throws Exception {
+        mockMvc.perform(delete("/api/series/{id}", "someId"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    @WithMockUser
+    void deleteSeriesReturnsNotFoundWhenSeriesDoesNotExist() throws Exception {
+        mockMvc.perform(delete("/api/series/{id}", "nonexistent"))
+                .andExpect(status().isNotFound())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    @WithMockUser
+    void deleteSeriesReturnsNoContentAndRemovesSeries() throws Exception {
+        var body = TestUtil.toJson(
+                new SeriesInput()
+                        .name("SERIES_TO_DELETE")
+                        .color("#00ff00")
+                        .minValue(BigDecimal.valueOf(0))
+                        .maxValue(BigDecimal.valueOf(10))
+                        .unit("°C")
+        );
+        var created = mockMvc.perform(post("/api/series")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andReturn();
+        var id = TestUtil.toObject(created.getResponse().getContentAsString(), Series.class).getId();
+        assertThat(seriesRepository.existsById(id)).isTrue();
+
+        mockMvc.perform(delete("/api/series/{id}", id))
+                .andExpect(status().isNoContent())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+
+        assertThat(seriesRepository.existsById(id)).isFalse();
+
+        mockMvc.perform(delete("/api/series/{id}", id))
+                .andExpect(status().isNotFound())
                 .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
     }
 }
