@@ -37,6 +37,12 @@ public class SeriesService {
         }
     }
 
+    public Series getSeriesById(String seriesId) {
+        return seriesRepository.findById(seriesId)
+                .map(seriesMapper::toDomain)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "series does not exist"));
+    }
+
     public List<Series> getAllSeries() {
         return seriesRepository.findAll().stream()
                 .map(seriesMapper::toDomain)
@@ -50,7 +56,4 @@ public class SeriesService {
         seriesRepository.deleteById(seriesId);
     }
 
-    public void getSeriesById(String seriesId) {
-        
-    }
 }

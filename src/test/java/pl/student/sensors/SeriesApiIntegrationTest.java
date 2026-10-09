@@ -17,6 +17,7 @@ import static com.atlassian.oai.validator.mockmvc.OpenApiValidationMatchers.open
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -160,6 +161,39 @@ class SeriesApiIntegrationTest extends AbstractIntegrationTest {
         assertThat(seriesRepository.existsById(id)).isFalse();
 
         mockMvc.perform(delete("/api/series/{id}", id))
+                .andExpect(status().isNotFound())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    void getSeriesByIdReturnsOkWhenNotLoggedIn() throws Exception {
+        var body = TestUtil.toJson(
+                new SeriesInput()
+                        .name("NEW_SERIES")
+                        .color("#0000ff")
+                        .minValue(BigDecimal.valueOf(0))
+                        .maxValue(BigDecimal.valueOf(10))
+                        .unit("°C")
+        );
+        var created = mockMvc.perform(post("/api/series")
+                        .with(user("user"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andReturn();
+        var id = TestUtil.toObject(created.getResponse().getContentAsString(), Series.class).getId();
+
+        mockMvc.perform(get("/api/series/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.name").value("NEW_SERIES"))
+                .andExpect(jsonPath("$.color").value("#0000ff"))
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    void getSeriesByIdReturnsNotFoundWhenSeriesDoesNotExist() throws Exception {
+        mockMvc.perform(get("/api/series/{id}", "nonexistent"))
                 .andExpect(status().isNotFound())
                 .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
     }

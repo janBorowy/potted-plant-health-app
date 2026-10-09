@@ -50,11 +50,14 @@ public class SeriesApiImpl implements SeriesApi {
 
     @Override
     public ResponseEntity<Series> getSeriesById(String seriesId) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        var series = seriesService.getSeriesById(seriesId);
+        return ResponseEntity.ok(seriesMapper.toApiResponse(series));
     }
 
     @Override
     public ResponseEntity<Series> replaceSeries(String seriesId, SeriesInput seriesInput) {
+        // must check whether the values already stored in measurements exceed given
+        // minValue-maxValue, so I'm leaving this unimplemented until those are done
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
     }
 }
