@@ -422,7 +422,7 @@ components:
           type: string,
           format: password,
           maxLength: 128,
-          minLen
+          minLen: 8
         }
         newPassword: {
           type: string,

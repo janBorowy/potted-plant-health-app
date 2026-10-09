@@ -1,4 +1,4 @@
-./gradlew clean build
+./gradlew clean build -x check
 set -a
 source .env
 set +a

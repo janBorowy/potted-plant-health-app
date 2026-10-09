@@ -1,10 +1,8 @@
 package pl.student.sensors.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.server.ResponseStatusException;
 import pl.student.sensors.generated.api.AuthApi;
 import pl.student.sensors.generated.model.LoginRequest;
 import pl.student.sensors.generated.model.LoginResponse;
@@ -21,7 +19,9 @@ public class AuthApiImpl implements AuthApi {
 
     @Override
     public ResponseEntity<Void> changePassword(PasswordChange passwordChange) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        var input = authMapper.toChangePasswordInput(passwordChange);
+        authenticationService.changePassword(input);
+        return ResponseEntity.noContent().build();
     }
 
     @Override
@@ -33,6 +33,7 @@ public class AuthApiImpl implements AuthApi {
 
     @Override
     public ResponseEntity<Void> logout() {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        authenticationService.logout();
+        return ResponseEntity.noContent().build();
     }
 }

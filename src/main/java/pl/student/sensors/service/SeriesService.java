@@ -22,6 +22,10 @@ public class SeriesService {
     private final SeriesRepository seriesRepository;
 
     public Series createSeries(CreateSeriesInput input) {
+        if (seriesRepository.existsByName(input.name())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "series with name '%s' already exists".formatted(input.name()));
+        }
+
         try {
             var seriesRecord = seriesRepository.save(seriesMapper.toRecord(input));
             return seriesMapper.toDomain(seriesRecord);

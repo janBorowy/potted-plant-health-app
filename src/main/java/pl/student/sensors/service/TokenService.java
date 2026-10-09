@@ -2,6 +2,7 @@ package pl.student.sensors.service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -10,6 +11,8 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import pl.student.sensors.config.AppProperties;
 import pl.student.sensors.dto.JwtDto;
+import pl.student.sensors.model.TokenRecord;
+import pl.student.sensors.model.TokenRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -20,18 +23,37 @@ public class TokenService {
 
     private final JwtEncoder jwtEncoder;
     private final AppProperties appProperties;
+    private final TokenRepository tokenRepository;
 
     public JwtDto generateToken(String subject) {
         var now = Instant.now();
+        var jti = UUID.randomUUID().toString();
         var claims = JwtClaimsSet.builder()
+                .id(jti)
                 .subject(subject)
                 .issuer(appProperties.getUrl())
                 .issuedAt(now)
                 .expiresAt(now.plus(tokenExpiryMinutes, ChronoUnit.MINUTES))
                 .build();
-        return JwtDto.builder()
+        var jwt = JwtDto.builder()
                 .accessToken(jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue())
                 .expiresInSeconds(tokenExpiryMinutes * 60)
                 .build();
+        tokenRepository.save(TokenRecord.builder()
+                .jti(jti)
+                .wasRevoked(false)
+                .build());
+        return jwt;
+    }
+
+    public void revokeToken(String jti) {
+        var tokenRecord = tokenRepository.findByJti(jti)
+                .orElseThrow(() -> new RuntimeException("attempt to revoke not existing token"));
+        if (!tokenRecord.wasRevoked()) {
+            tokenRepository.save(tokenRecord
+                    .toBuilder()
+                    .wasRevoked(true)
+                    .build());
+        }
     }
 }

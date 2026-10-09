@@ -13,6 +13,7 @@ import pl.student.sensors.generated.model.Series;
 import pl.student.sensors.generated.model.SeriesInput;
 import pl.student.sensors.model.SeriesRepository;
 
+import static com.atlassian.oai.validator.mockmvc.OpenApiValidationMatchers.openApi;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -21,6 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pl.student.sensors.TestUtil.OPEN_API_VALIDATOR;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -37,7 +39,7 @@ class SeriesApiIntegrationTest extends AbstractIntegrationTest {
     @Test
     @WithMockUser
     void createSeriesReturnsCreatedAndPersistsSeries() throws Exception {
-        var body = JsonUtil.toJson(
+        var body = TestUtil.toJson(
                 new SeriesInput()
                         .name("TEMP_SENSOR_0")
                         .color("#ff0000")
@@ -56,9 +58,10 @@ class SeriesApiIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.color").value("#ff0000"))
                 .andExpect(jsonPath("$.minValue").value(closeTo(-20, 0.01)))
                 .andExpect(jsonPath("$.maxValue").value(closeTo(100.0, 0.01)))
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR))
                 .andReturn();
 
-        var resultBody = JsonUtil.toObject(result.getResponse().getContentAsString(), Series.class);
+        var resultBody = TestUtil.toObject(result.getResponse().getContentAsString(), Series.class);
 
         assertThat(resultBody)
                 .satisfies(it -> seriesRepository.existsById(it.getId()));
@@ -66,7 +69,7 @@ class SeriesApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void createSeriesReturnsUnauthorizedWhenNotLoggedIn() throws Exception {
-        var body = JsonUtil.toJson(
+        var body = TestUtil.toJson(
                 new SeriesInput()
                         .name("TEMP_SENSOR_0")
                         .color("#ff0000")
@@ -78,13 +81,40 @@ class SeriesApiIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(post("/api/series")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    @WithMockUser
+    void createSeriesReturnsBadRequestWhenNameAlreadyExists() throws Exception {
+        var body = TestUtil.toJson(
+                new SeriesInput()
+                        .name("DUPLICATE_SENSOR")
+                        .color("#ff0000")
+                        .minValue(BigDecimal.valueOf(-20.0))
+                        .maxValue(BigDecimal.valueOf(100.0))
+                        .unit("°C")
+        );
+
+        mockMvc.perform(post("/api/series")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+
+        mockMvc.perform(post("/api/series")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
     }
 
     @Test
     void getAllSeriesReturnsOkWhenNotLoggedIn() throws Exception {
         mockMvc.perform(get("/api/series"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
     }
 }

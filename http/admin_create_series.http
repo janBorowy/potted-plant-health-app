@@ -85,4 +85,26 @@ client.test("Authenticated series creation returns 201", function () {
 client.global.set("createdSeriesName", response.body.name);
 %}
 
+### Logout
+
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{authToken}}
+
+> {%
+client.test("Returns no content", function () {
+    client.assert(response.status === 204, "Expected 204 No Content");
+});
+%}
+
+### Another logout fails - unauthorized
+
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{authToken}}
+
+> {%
+client.test("Returns no content", function () {
+    client.assert(response.status === 401, "Expected 401 Forbidden");
+});
+%}
+
 ### TODO: Getting all series without authentication succeeds

@@ -12,7 +12,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -34,6 +34,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation("org.testcontainers:testcontainers-junit-jupiter")
 	testImplementation("org.testcontainers:testcontainers-mongodb")
+	testImplementation("com.atlassian.oai:swagger-request-validator-mockmvc:3.0.0")
 	testCompileOnly("org.projectlombok:lombok")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testAnnotationProcessor("org.projectlombok:lombok")
