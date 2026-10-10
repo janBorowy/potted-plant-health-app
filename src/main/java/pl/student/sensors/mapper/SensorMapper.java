@@ -1,12 +1,8 @@
 package pl.student.sensors.mapper;
 
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import pl.student.sensors.dto.CreateSensorInput;
 import pl.student.sensors.dto.CreateSensorResponse;
@@ -14,17 +10,19 @@ import pl.student.sensors.dto.Sensor;
 import pl.student.sensors.generated.model.SensorCreated;
 import pl.student.sensors.generated.model.SensorInput;
 import pl.student.sensors.model.SensorRecord;
+import pl.student.sensors.service.SensorAuthenticationService;
 
 @Component
-@Mapper(config = MapstructConfig.class)
+@Mapper(config = MapstructConfig.class,
+        uses = DateMapperHelper.class)
 public abstract class SensorMapper {
 
     @Autowired
-    protected PasswordEncoder passwordEncoder;
+    protected SensorAuthenticationService sensorAuthenticationService;
 
     public abstract CreateSensorInput toCreateSensorInput(SensorInput api);
 
-    @Mapping(target = "hashedApiKey", expression = "java(passwordEncoder.encode(apiKey))")
+    @Mapping(target = "hashedApiKey", expression = "java(sensorAuthenticationService.hashApiKey(apiKey))")
     @Mapping(target = "createdAt", expression = "java(java.time.Instant.now())")
     @Mapping(target = "lastMeasurementAt", ignore = true)
     public abstract SensorRecord toRecord(CreateSensorInput input, String id, String apiKey);
@@ -41,7 +39,5 @@ public abstract class SensorMapper {
     @Mapping(target = "lastMeasurementAt", source = "sensor.lastMeasurementAt")
     public abstract SensorCreated toApiResponse(CreateSensorResponse sensor);
 
-    protected OffsetDateTime toOffset(Instant i) {
-        return i == null ? null : i.atOffset(ZoneOffset.UTC);
-    }
+    public abstract pl.student.sensors.generated.model.Sensor toApiResponse(Sensor sensor);
 }

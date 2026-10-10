@@ -43,6 +43,9 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/series").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/series/*").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/sensors").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/sensors/*").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/measurements").permitAll()
                                 .anyRequest().authenticated())
                 // --- Disables stateful authentication ---
                 .csrf(AbstractHttpConfigurer::disable)

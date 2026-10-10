@@ -1,5 +1,6 @@
 package pl.student.sensors.service;
 
+import jakarta.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.student.sensors.dto.CreateSensorInput;
 import pl.student.sensors.dto.CreateSensorResponse;
+import pl.student.sensors.dto.Sensor;
 import pl.student.sensors.mapper.SensorMapper;
 import pl.student.sensors.model.SeriesRepository;
 
@@ -38,5 +40,32 @@ public class SensorService {
                 .build());
 
         return sensorMapper.toCreateResponse(sensorRecord, series.id(), apiKey);
+    }
+
+    public Sensor getSensorById(@Nonnull String id) {
+        return seriesRepository.findBySensors_id(id)
+                .flatMap(series -> series.sensors().stream()
+                        .filter(sensor -> Objects.equals(sensor.id(), id))
+                        .map(sensor -> sensorMapper.toDomain(sensor, series.id()))
+                        .findFirst()
+                )
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    public List<Sensor> getAllSensors() {
+        return seriesRepository.findAll().stream()
+                .flatMap(series -> series.sensors().stream()
+                        .map(sensor -> sensorMapper.toDomain(sensor, series.id())))
+                .toList();
+    }
+
+    public void deleteSensorById(@Nonnull String sensorId) {
+        var series = seriesRepository.findBySensors_id(sensorId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "sensor does not exist"));
+        var sensors = new ArrayList<>(series.sensors() == null ? List.of() : series.sensors());
+        sensors.removeIf(it -> Objects.equals(it.id(), sensorId));
+        seriesRepository.save(series.toBuilder()
+                .sensors(sensors)
+                .build());
     }
 }

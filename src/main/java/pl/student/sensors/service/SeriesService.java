@@ -27,7 +27,7 @@ public class SeriesService {
         }
 
         try {
-            var seriesRecord = seriesRepository.save(seriesMapper.toRecord(input));
+            var seriesRecord = seriesRepository.insert(seriesMapper.toRecord(input));
             return seriesMapper.toDomain(seriesRecord);
         } catch (MongoWriteException e) {
             if (e.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {

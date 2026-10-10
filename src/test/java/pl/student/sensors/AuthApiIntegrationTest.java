@@ -1,6 +1,7 @@
 package pl.student.sensors;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -129,7 +130,7 @@ class AuthApiIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isForbidden())
                 .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
 
-        verify(userDetailsManager, never()).updateUser(org.mockito.ArgumentMatchers.any());
+        verify(userDetailsManager, never()).updateUser(ArgumentMatchers.any());
     }
 
     @Test

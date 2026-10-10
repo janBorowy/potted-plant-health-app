@@ -6,6 +6,7 @@ public record Sensor(
         String id,
         String name,
         String seriesId,
+        String hashedApiKey,
         Instant createdAt,
         Instant lastMeasurementAt
 ) {

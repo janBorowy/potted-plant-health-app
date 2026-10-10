@@ -3,6 +3,7 @@ package pl.student.sensors.service;
 import java.security.SecureRandom;
 import java.util.HexFormat;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,5 +16,9 @@ public class SensorAuthenticationService {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);
         return HexFormat.of().formatHex(bytes);
+    }
+
+    public String hashApiKey(String apiKey) {
+        return DigestUtils.sha256Hex(apiKey);
     }
 }
