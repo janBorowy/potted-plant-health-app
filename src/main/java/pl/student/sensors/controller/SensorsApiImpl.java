@@ -39,14 +39,14 @@ public class SensorsApiImpl implements SensorsApi {
     @Override
     public ResponseEntity<SensorCreated> registerSensor(SensorInput sensorInput) {
         var input = sensorMapper.toCreateSensorInput(sensorInput);
-        var sensor = sensorService.createSensor(input);
+        var response = sensorService.createSensor(input);
         var location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .scheme(null)
                 .host(null)
                 .port(null)
                 .path("/{id}")
-                .buildAndExpand(sensor.id())
+                .buildAndExpand(response.sensor().id())
                 .toUri();
-        return ResponseEntity.created(location).body(sensorMapper.toApiResponse(sensor));
+        return ResponseEntity.created(location).body(sensorMapper.toApiResponse(response));
     }
 }

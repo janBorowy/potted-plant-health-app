@@ -1,0 +1,193 @@
+@username = admin
+@password = adminadmin
+
+### Setup: random tag that namespaces all data created by this run
+GET {{baseUrl}}/api/health
+
+> {%
+client.test("Health check returns 200", function () {
+    client.assert(response.status === 200, "Expected 200 OK");
+});
+client.global.set("tag", $random.hexadecimal(8));
+%}
+
+### Login as admin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+> {%
+client.test("Login returns 200", function () {
+    client.assert(response.status === 200, "Expected 200 OK");
+    client.assert(response.body.accessToken, "Expected an access token");
+});
+client.global.set("authToken", response.body.accessToken);
+%}
+
+### Add series A
+POST {{baseUrl}}/api/series
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "series-a-{{tag}}",
+  "minValue": 0.0,
+  "maxValue": 100.0,
+  "color": "#ff0000"
+}
+
+> {%
+client.test("Series A created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.id, "Expected series id");
+});
+client.global.set("seriesAId", response.body.id);
+%}
+
+### Add series B
+POST {{baseUrl}}/api/series
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "series-b-{{tag}}",
+  "minValue": -20.0,
+  "maxValue": 60.0,
+  "color": "#0000ff"
+}
+
+> {%
+client.test("Series B created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.id, "Expected series id");
+});
+client.global.set("seriesBId", response.body.id);
+%}
+
+### Add sensor a1
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "sensor-a1-{{tag}}",
+  "seriesId": "{{seriesAId}}"
+}
+
+> {%
+client.test("Sensor a1 created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.apiKey, "Expected api key");
+    client.assert(response.body.seriesId === client.global.get("seriesAId"), "Sensor should belong to its series");
+});
+%}
+
+### Add sensor a2
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "sensor-a2-{{tag}}",
+  "seriesId": "{{seriesAId}}"
+}
+
+> {%
+client.test("Sensor a2 created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.apiKey, "Expected api key");
+    client.assert(response.body.seriesId === client.global.get("seriesAId"), "Sensor should belong to its series");
+});
+%}
+
+### Add sensor a3
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "sensor-a3-{{tag}}",
+  "seriesId": "{{seriesAId}}"
+}
+
+> {%
+client.test("Sensor a3 created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.apiKey, "Expected api key");
+    client.assert(response.body.seriesId === client.global.get("seriesAId"), "Sensor should belong to its series");
+});
+%}
+
+### Add sensor b1
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "sensor-b1-{{tag}}",
+  "seriesId": "{{seriesBId}}"
+}
+
+> {%
+client.test("Sensor b1 created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.apiKey, "Expected api key");
+    client.assert(response.body.seriesId === client.global.get("seriesBId"), "Sensor should belong to its series");
+});
+%}
+
+### Add sensor b2
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "sensor-b2-{{tag}}",
+  "seriesId": "{{seriesBId}}"
+}
+
+> {%
+client.test("Sensor b2 created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.apiKey, "Expected api key");
+    client.assert(response.body.seriesId === client.global.get("seriesBId"), "Sensor should belong to its series");
+});
+%}
+
+### Add sensor b3
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "sensor-b3-{{tag}}",
+  "seriesId": "{{seriesBId}}"
+}
+
+> {%
+client.test("Sensor b3 created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.apiKey, "Expected api key");
+    client.assert(response.body.seriesId === client.global.get("seriesBId"), "Sensor should belong to its series");
+});
+%}
+
+### Duplicate sensor name in series A is rejected
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "sensor-a1-{{tag}}",
+  "seriesId": "{{seriesAId}}"
+}
+
+> {%
+client.test("Duplicate sensor name rejected", function () {
+    client.assert(response.status === 400 || response.status === 422, "Expected 400/422");
+});
+%}

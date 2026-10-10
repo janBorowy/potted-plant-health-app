@@ -83,7 +83,7 @@ class SensorsApiIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.name").value("NEW_SENSOR"))
                 .andExpect(jsonPath("$.seriesId").value(seriesId))
-                .andExpect(jsonPath("$.apiKey").value("dummyapikey"))
+                .andExpect(jsonPath("$.apiKey").isNotEmpty())
                 .andExpect(jsonPath("$.createdAt").value(matchesPattern(DATE_TIME_PATTERN)));
 
         var savedSeries = seriesRepository.findById(seriesId).orElseThrow();
