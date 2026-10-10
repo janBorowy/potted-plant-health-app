@@ -1,6 +1,9 @@
 package pl.student.sensors;
 
+import com.jayway.jsonpath.JsonPath;
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +12,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import pl.student.sensors.generated.model.SensorInput;
 import pl.student.sensors.generated.model.Series;
 import pl.student.sensors.generated.model.SeriesInput;
 import pl.student.sensors.model.SeriesRepository;
@@ -21,6 +25,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -196,5 +201,174 @@ class SeriesApiIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/series/{id}", "nonexistent"))
                 .andExpect(status().isNotFound())
                 .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    @WithMockUser
+    void replaceSeriesReturnsOkAndUpdatesSeries() throws Exception {
+        var id = createSeries("REPLACE_ORIGINAL", 0, 100);
+        var body = TestUtil.toJson(seriesInput("REPLACE_UPDATED", -50, 200).color("#00ff00").unit("K"));
+
+        mockMvc.perform(put("/api/series/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.name").value("REPLACE_UPDATED"))
+                .andExpect(jsonPath("$.color").value("#00ff00"))
+                .andExpect(jsonPath("$.unit").value("K"))
+                .andExpect(jsonPath("$.minValue").value(closeTo(-50, 0.01)))
+                .andExpect(jsonPath("$.maxValue").value(closeTo(200, 0.01)))
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+
+        var stored = seriesRepository.findById(id).orElseThrow();
+        assertThat(stored.name()).isEqualTo("REPLACE_UPDATED");
+        assertThat(stored.color()).isEqualTo("#00ff00");
+        assertThat(stored.unit()).isEqualTo("K");
+        assertThat(stored.minValue()).isEqualTo(-50);
+        assertThat(stored.maxValue()).isEqualTo(200);
+    }
+
+    @Test
+    @WithMockUser
+    void replaceSeriesNarrowsRangeWhenExistingMeasurementsFit() throws Exception {
+        var id = createSeries("REPLACE_NARROW", 0, 100);
+        addMeasurements(id, 10, 20, 30);
+
+        mockMvc.perform(put("/api/series/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtil.toJson(seriesInput("REPLACE_NARROW", 10, 30))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.minValue").value(closeTo(10, 0.01)))
+                .andExpect(jsonPath("$.maxValue").value(closeTo(30, 0.01)))
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+
+        var stored = seriesRepository.findById(id).orElseThrow();
+        assertThat(stored.minValue()).isEqualTo(10);
+        assertThat(stored.maxValue()).isEqualTo(30);
+    }
+
+    @Test
+    @WithMockUser
+    void replaceSeriesReturnsConflictAndDoesNotUpdateWhenMeasurementBelowNewMinValue() throws Exception {
+        var id = createSeries("REPLACE_CONFLICT_MIN", 0, 100);
+        addMeasurements(id, 5, 50);
+
+        mockMvc.perform(put("/api/series/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtil.toJson(seriesInput("REPLACE_CONFLICT_MIN_NEW", 10, 100))))
+                .andExpect(status().isConflict())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+
+        assertSeriesUnchanged(id, "REPLACE_CONFLICT_MIN", 0, 100);
+    }
+
+    @Test
+    @WithMockUser
+    void replaceSeriesReturnsConflictAndDoesNotUpdateWhenMeasurementAboveNewMaxValue() throws Exception {
+        var id = createSeries("REPLACE_CONFLICT_MAX", 0, 100);
+        addMeasurements(id, 50, 95);
+
+        mockMvc.perform(put("/api/series/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtil.toJson(seriesInput("REPLACE_CONFLICT_MAX_NEW", 0, 90))))
+                .andExpect(status().isConflict())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+
+        assertSeriesUnchanged(id, "REPLACE_CONFLICT_MAX", 0, 100);
+    }
+
+    @Test
+    @WithMockUser
+    void replaceSeriesReturnsConflictWhenBothBoundsExcludeMeasurements() throws Exception {
+        var id = createSeries("REPLACE_CONFLICT_BOTH", 0, 100);
+        addMeasurements(id, 5, 95);
+
+        mockMvc.perform(put("/api/series/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtil.toJson(seriesInput("REPLACE_CONFLICT_BOTH", 10, 90))))
+                .andExpect(status().isConflict())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+
+        assertSeriesUnchanged(id, "REPLACE_CONFLICT_BOTH", 0, 100);
+    }
+
+    @Test
+    @WithMockUser
+    void replaceSeriesAcceptsMeasurementsExactlyOnNewBounds() throws Exception {
+        var id = createSeries("REPLACE_ON_BOUNDS", 0, 100);
+        addMeasurements(id, 10, 90);
+
+        mockMvc.perform(put("/api/series/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtil.toJson(seriesInput("REPLACE_ON_BOUNDS", 10, 90))))
+                .andExpect(status().isOk())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    @WithMockUser
+    void replaceSeriesReturnsNotFoundWhenSeriesDoesNotExist() throws Exception {
+        mockMvc.perform(put("/api/series/{id}", "nonexistent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtil.toJson(seriesInput("REPLACE_MISSING", 0, 10))))
+                .andExpect(status().isNotFound())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    void replaceSeriesReturnsUnauthorizedWhenNotLoggedIn() throws Exception {
+        var id = createSeries("REPLACE_UNAUTHORIZED", 0, 100);
+
+        mockMvc.perform(put("/api/series/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtil.toJson(seriesInput("REPLACE_UNAUTHORIZED_NEW", 0, 200))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+
+        assertSeriesUnchanged(id, "REPLACE_UNAUTHORIZED", 0, 100);
+    }
+
+    private SeriesInput seriesInput(String name, double min, double max) {
+        return new SeriesInput()
+                .name(name)
+                .color("#ff0000")
+                .minValue(BigDecimal.valueOf(min))
+                .maxValue(BigDecimal.valueOf(max));
+    }
+
+    private String createSeries(String name, double min, double max) throws Exception {
+        var result = mockMvc.perform(post("/api/series")
+                        .with(user("admin"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtil.toJson(seriesInput(name, min, max))))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return TestUtil.toObject(result.getResponse().getContentAsString(), Series.class).getId();
+    }
+
+    private void addMeasurements(String seriesId, double... values) throws Exception {
+        var sensorResult = mockMvc.perform(post("/api/sensors")
+                        .with(user("admin"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TestUtil.toJson(new SensorInput().name("SENSOR_" + UUID.randomUUID()).seriesId(seriesId))))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String apiKey = JsonPath.read(sensorResult.getResponse().getContentAsString(), "$.apiKey");
+        for (var value : values) {
+            mockMvc.perform(post("/api/measurements")
+                            .header("x-api-key", apiKey)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(TestUtil.toJson(Map.of("value", value))))
+                    .andExpect(status().isCreated());
+        }
+    }
+
+    private void assertSeriesUnchanged(String id, String name, double min, double max) {
+        var stored = seriesRepository.findById(id).orElseThrow();
+        assertThat(stored.name()).isEqualTo(name);
+        assertThat(stored.minValue()).isEqualTo(min);
+        assertThat(stored.maxValue()).isEqualTo(max);
+        assertThat(stored.color()).isEqualTo("#ff0000");
     }
 }

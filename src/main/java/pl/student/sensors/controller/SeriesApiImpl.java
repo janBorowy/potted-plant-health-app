@@ -2,10 +2,8 @@ package pl.student.sensors.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.student.sensors.generated.api.SeriesApi;
 import pl.student.sensors.generated.model.Series;
@@ -56,8 +54,8 @@ public class SeriesApiImpl implements SeriesApi {
 
     @Override
     public ResponseEntity<Series> replaceSeries(String seriesId, SeriesInput seriesInput) {
-        // must check whether the values already stored in measurements exceed given
-        // minValue-maxValue, so I'm leaving this unimplemented until those are done
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        var input = seriesMapper.toReplaceInput(seriesInput, seriesId);
+        var series = seriesService.replaceSeries(input);
+        return ResponseEntity.ok().body(seriesMapper.toApiResponse(series));
     }
 }

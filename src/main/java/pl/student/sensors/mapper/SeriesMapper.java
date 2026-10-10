@@ -6,8 +6,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import pl.student.sensors.dto.CreateSeriesInput;
+import pl.student.sensors.dto.ReplaceSeriesInput;
 import pl.student.sensors.dto.Series;
 import pl.student.sensors.generated.model.SeriesInput;
+import pl.student.sensors.model.SensorRecord;
 import pl.student.sensors.model.SeriesRecord;
 
 @Mapper(config = MapstructConfig.class)
@@ -19,6 +21,8 @@ public abstract class SeriesMapper {
     @Mapping(target = "sensors", ignore = true)
     public abstract SeriesRecord toRecord(CreateSeriesInput input);
 
+    public abstract SeriesRecord toRecord(ReplaceSeriesInput input, List<SensorRecord> sensors);
+
     @AfterMapping
     protected void toRecordAfterMapping(CreateSeriesInput source, @MappingTarget SeriesRecord.SeriesRecordBuilder builder) {
         builder.sensors(List.of());
@@ -27,4 +31,7 @@ public abstract class SeriesMapper {
     public abstract Series toDomain(SeriesRecord input);
 
     public abstract pl.student.sensors.generated.model.Series toApiResponse(Series domain);
+
+    @Mapping(target = "id", source = "seriesId")
+    public abstract ReplaceSeriesInput toReplaceInput(SeriesInput seriesInput, String seriesId);
 }
