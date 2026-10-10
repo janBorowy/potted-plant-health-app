@@ -46,7 +46,7 @@ class SensorsApiIntegrationTest extends AbstractIntegrationTest {
     void registerSensorReturnsUnauthorizedWhenNotAuthenticated() throws Exception {
         mockMvc.perform(post("/api/sensors")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(sensorBody("SENSOR", "seriesCommandSeparatedIds-id")))
+                        .content(sensorBody("SENSOR", "series-id")))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -55,7 +55,7 @@ class SensorsApiIntegrationTest extends AbstractIntegrationTest {
     void registerSensorReturnsBadRequestWhenSeriesDoesNotExist() throws Exception {
         mockMvc.perform(post("/api/sensors")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(sensorBody("SENSOR", "missing-seriesCommandSeparatedIds")))
+                        .content(sensorBody("SENSOR", "missing-series")))
                 .andExpect(status().isBadRequest());
     }
 
