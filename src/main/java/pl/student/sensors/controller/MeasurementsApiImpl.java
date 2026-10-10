@@ -13,6 +13,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.student.sensors.generated.api.MeasurementsApi;
 import pl.student.sensors.generated.model.Measurement;
 import pl.student.sensors.generated.model.MeasurementInput;
+import pl.student.sensors.generated.model.MeasurementSort;
 import pl.student.sensors.mapper.MeasurementMapper;
 import pl.student.sensors.service.MeasurementService;
 
@@ -26,7 +27,8 @@ public class MeasurementsApiImpl implements MeasurementsApi {
 
     @Override
     public ResponseEntity<Measurement> getMeasurementById(String measurementId) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+        var measurement = measurementService.getMeasurementById(measurementId);
+        return ResponseEntity.ok(measurementMapper.toApiResponse(measurement));
     }
 
     @Override
@@ -50,8 +52,14 @@ public class MeasurementsApiImpl implements MeasurementsApi {
 
     @Override
     public ResponseEntity<List<Measurement>> searchMeasurements(@Nullable String series, @Nullable OffsetDateTime from, @Nullable OffsetDateTime to,
-                                                                String sort, Integer limit) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED);
+                                                                MeasurementSort sort, Integer limit) {
+        var input = measurementMapper.toSearchInput(series, from, to, sort, limit);
+        var measurements = measurementService.searchMeasurements(input);
+        return ResponseEntity.ok().body(
+                measurements.stream()
+                        .map(measurementMapper::toApiResponse)
+                        .toList()
+        );
     }
 
 }

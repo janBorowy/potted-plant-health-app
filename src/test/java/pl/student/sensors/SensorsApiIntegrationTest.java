@@ -46,7 +46,7 @@ class SensorsApiIntegrationTest extends AbstractIntegrationTest {
     void registerSensorReturnsUnauthorizedWhenNotAuthenticated() throws Exception {
         mockMvc.perform(post("/api/sensors")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(sensorBody("SENSOR", "series-id")))
+                        .content(sensorBody("SENSOR", "seriesCommandSeparatedIds-id")))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -55,7 +55,7 @@ class SensorsApiIntegrationTest extends AbstractIntegrationTest {
     void registerSensorReturnsBadRequestWhenSeriesDoesNotExist() throws Exception {
         mockMvc.perform(post("/api/sensors")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(sensorBody("SENSOR", "missing-series")))
+                        .content(sensorBody("SENSOR", "missing-seriesCommandSeparatedIds")))
                 .andExpect(status().isBadRequest());
     }
 
@@ -98,6 +98,21 @@ class SensorsApiIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void getAllSensorsReturnsUnauthorizedWhenNotAuthenticated() throws Exception {
+        mockMvc.perform(get("/api/sensors"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    void getSensorByIdReturnsUnauthorizedWhenNotAuthenticated() throws Exception {
+        mockMvc.perform(get("/api/sensors/{id}", "some-sensor"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(openApi().isValid(OPEN_API_VALIDATOR));
+    }
+
+    @Test
+    @WithMockUser
     void getAllSensorsReturnsRegisteredSensorsWithoutApiKeys() throws Exception {
         var seriesId = createSeries();
         var sensorId = registerSensor("LISTED_SENSOR", seriesId);
@@ -113,6 +128,7 @@ class SensorsApiIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @WithMockUser
     void getSensorByIdReturnsRegisteredSensorWithoutApiKey() throws Exception {
         var seriesId = createSeries();
         var sensorId = registerSensor("RETRIEVED_SENSOR", seriesId);
@@ -128,6 +144,7 @@ class SensorsApiIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    @WithMockUser
     void getSensorByIdReturnsNotFoundWhenSensorDoesNotExist() throws Exception {
         mockMvc.perform(get("/api/sensors/{id}", "missing-sensor"))
                 .andExpect(status().isNotFound())

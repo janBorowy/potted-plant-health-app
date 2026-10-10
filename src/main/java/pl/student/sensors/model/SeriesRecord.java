@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document("series")
+@Document("seriesCommandSeparatedIds")
 @Builder(toBuilder = true)
 @CompoundIndex(
         name = "series_sensor_id_idx",
@@ -26,6 +26,6 @@ public record SeriesRecord(
         @Nonnull String color,
         String icon,
         String unit,
-        List<SensorRecord> sensors
+        @Nonnull List<SensorRecord> sensors
 ) {
 }

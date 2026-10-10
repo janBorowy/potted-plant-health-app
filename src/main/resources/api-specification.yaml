@@ -42,7 +42,7 @@ servers:
 tags:
   - name: system
   - name: auth
-  - name: series
+  - name: seriesCommandSeparatedIds
   - name: measurements
   - name: sensors
     description: Rejestracja i wyrejestrowanie czujników (administrator).
@@ -118,7 +118,7 @@ paths:
 
   /api/series:
     get:
-      tags: [series]
+      tags: [seriesCommandSeparatedIds]
       operationId: getAllSeries
       summary: Lista serii
       responses:
@@ -131,7 +131,7 @@ paths:
                 items: { $ref: '#/components/schemas/Series' }
         '406': { $ref: '#/components/responses/NotAcceptable' }
     post:
-      tags: [series]
+      tags: [seriesCommandSeparatedIds]
       operationId: createSeries
       summary: Utworzenie serii
       security: [ { bearerAuth: [] } ]
@@ -158,7 +158,7 @@ paths:
       - $ref: '#/components/parameters/SeriesId'
     get:
       operationId: getSeriesById
-      tags: [series]
+      tags: [seriesCommandSeparatedIds]
       summary: Odczyt serii
       responses:
         '200':
@@ -168,7 +168,7 @@ paths:
               schema: { $ref: '#/components/schemas/Series' }
         '404': { $ref: '#/components/responses/NotFound' }
     put:
-      tags: [series]
+      tags: [seriesCommandSeparatedIds]
       operationId: replaceSeries
       summary: Pełna aktualizacja serii
       description: |
@@ -193,7 +193,7 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/Unprocessable' }
     delete:
-      tags: [series]
+      tags: [seriesCommandSeparatedIds]
       operationId: deleteSeries
       summary: Usunięcie serii wraz ze wszystkimi jej wynikami i przypisanymi czujnikami
       security: [ { bearerAuth: [] } ]
@@ -223,7 +223,7 @@ paths:
           schema: { type: string, format: date-time }
         - name: sort
           in: query
-          schema: { type: string, enum: [timestamp, -timestamp], default: timestamp }
+          schema: { $ref: "#/components/schemas/MeasurementSort" }
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 10000, default: 1000 }
@@ -290,8 +290,7 @@ paths:
       tags: [sensors]
       operationId: getAllSensors
       summary: Lista zarejestrowanych czujników (bez kluczy API)
-      # TODO: should be public
-#      security: [ { bearerAuth: [] } ]
+      security: [ { bearerAuth: [] } ]
       responses:
         '200':
           description: Czujniki
@@ -300,7 +299,7 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Sensor' }
-#        '401': { $ref: '#/components/responses/Unauthorized' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       tags: [sensors]
       operationId: registerSensor
@@ -338,15 +337,14 @@ paths:
       tags: [sensors]
       operationId: getSensorById
       summary: Odczyt czujnika (bez klucza API)
-      # TODO: should be public
-#      security: [ { bearerAuth: [] } ]
+      security: [ { bearerAuth: [] } ]
       responses:
         '200':
           description: Czujnik
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Sensor' }
-#        '401': { $ref: '#/components/responses/Unauthorized' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
     delete:
       tags: [sensors]
@@ -385,7 +383,7 @@ components:
 
   headers:
     Location:
-      description: Ścieżka nowo utworzonego zasobu, np. `/api/series/12`
+      description: Ścieżka nowo utworzonego zasobu, np. `/api/seriesCommandSeparatedIds/12`
       schema: { type: string }
 
   schemas:
@@ -480,6 +478,11 @@ components:
           description: Czujnik, który przesłał wynik (opcjonalne)
         value: { type: number }
         timestamp: { type: string, format: date-time }
+
+    MeasurementSort:
+      type: string
+      enum: [timestamp, -timestamp]
+      default: timestamp
 
     SensorInput:
       type: object

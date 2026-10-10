@@ -23,7 +23,8 @@ public class SeriesService {
 
     public Series createSeries(CreateSeriesInput input) {
         if (seriesRepository.existsByName(input.name())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "series with name '%s' already exists".formatted(input.name()));
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "seriesCommandSeparatedIds with name '%s' already exists".formatted(input.name()));
         }
 
         try {
@@ -31,7 +32,7 @@ public class SeriesService {
             return seriesMapper.toDomain(seriesRecord);
         } catch (MongoWriteException e) {
             if (e.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "series with given name already exists");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "seriesCommandSeparatedIds with given name already exists");
             }
             throw e;
         }
@@ -40,7 +41,7 @@ public class SeriesService {
     public Series getSeriesById(String seriesId) {
         return seriesRepository.findById(seriesId)
                 .map(seriesMapper::toDomain)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "series does not exist"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "seriesCommandSeparatedIds does not exist"));
     }
 
     public List<Series> getAllSeries() {
@@ -51,7 +52,7 @@ public class SeriesService {
 
     public void deleteSeries(String seriesId) {
         if (!seriesRepository.existsById(seriesId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "series does not exist");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "seriesCommandSeparatedIds does not exist");
         }
         seriesRepository.deleteById(seriesId);
     }

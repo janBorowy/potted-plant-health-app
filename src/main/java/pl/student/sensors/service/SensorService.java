@@ -25,11 +25,11 @@ public class SensorService {
 
     public CreateSensorResponse createSensor(CreateSensorInput input) {
         var series = seriesRepository.findById(input.seriesId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "series with given id does not exist"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "seriesCommandSeparatedIds with given id does not exist"));
         var sensors = new ArrayList<>(series.sensors() == null ? List.of() : series.sensors());
         if (sensors.stream()
                 .anyMatch(it -> Objects.equals(input.name(), it.name()))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sensor with given name already exists for this series");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sensor with given name already exists for this seriesCommandSeparatedIds");
         }
 
         var apiKey = sensorAuthenticationService.generateApiKey();
