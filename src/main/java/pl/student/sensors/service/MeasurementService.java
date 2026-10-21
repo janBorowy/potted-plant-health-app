@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -26,6 +27,7 @@ import pl.student.sensors.model.SeriesRepository;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MeasurementService {
@@ -41,12 +43,11 @@ public class MeasurementService {
         var series = seriesRepository.findBySensors_hashedApiKey(hashedApiKey)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        validateMeasurementValue(input.value(), series);
-
         var sensor = series.sensors().stream()
                 .filter(it -> Objects.equals(it.hashedApiKey(), hashedApiKey))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("sensor not found - race"));
+        validateMeasurementValue(input.value(), series, sensor.id());
         var measurementRecord = measurementMapper.toRecord(input, series.id(), sensor.id());
         var savedRecord = measurementRepository.insert(measurementRecord);
 
@@ -85,8 +86,9 @@ public class MeasurementService {
                 .toList();
     }
 
-    private void validateMeasurementValue(double value, SeriesRecord series) {
+    private void validateMeasurementValue(double value, SeriesRecord series, String sensorId) {
         if (value > series.maxValue() || value < series.minValue()) {
+            log.error("Invalid measurement value, value={}, seriesId={}, sensorId={}", value, series.id(), sensorId);
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT,
                     "value must be between %.2f and %.2f".formatted(series.minValue(), series.maxValue()));
         }

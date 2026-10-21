@@ -5,7 +5,6 @@ import com.mongodb.MongoWriteException;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,7 +24,6 @@ public class SeriesService {
     private final SeriesMapper seriesMapper;
     private final SeriesRepository seriesRepository;
     private final MeasurementRepository measurementRepository;
-    private final MappingMongoConverter mappingMongoConverter;
 
     public Series createSeries(CreateSeriesInput input) {
         if (seriesRepository.existsByName(input.name())) {
@@ -61,6 +59,8 @@ public class SeriesService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "series does not exist");
         }
         seriesRepository.deleteById(seriesId);
+        var count = measurementRepository.deleteAllByMetadataSeriesId(seriesId);
+        log.info("Series deleted seriesId={}, deletedMeasurementsCount={}", seriesId, count);
     }
 
     public Series replaceSeries(ReplaceSeriesInput input) {

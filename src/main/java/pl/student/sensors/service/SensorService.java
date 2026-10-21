@@ -26,7 +26,7 @@ public class SensorService {
     public CreateSensorResponse createSensor(CreateSensorInput input) {
         var series = seriesRepository.findById(input.seriesId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "series with given id does not exist"));
-        var sensors = new ArrayList<>(series.sensors() == null ? List.of() : series.sensors());
+        var sensors = new ArrayList<>(series.sensors());
         if (sensors.stream()
                 .anyMatch(it -> Objects.equals(input.name(), it.name()))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sensor with given name already exists for this series");
@@ -62,7 +62,7 @@ public class SensorService {
     public void deleteSensorById(@Nonnull String sensorId) {
         var series = seriesRepository.findBySensors_id(sensorId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "sensor does not exist"));
-        var sensors = new ArrayList<>(series.sensors() == null ? List.of() : series.sensors());
+        var sensors = new ArrayList<>(series.sensors());
         sensors.removeIf(it -> Objects.equals(it.id(), sensorId));
         seriesRepository.save(series.toBuilder()
                 .sensors(sensors)

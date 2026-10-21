@@ -10,10 +10,10 @@
 //   node zai-tests.mjs --csv zgloszenia.csv --stage E2 --out wyniki.csv [--lighthouse]
 //   Kolumny CSV: student,app_url,api_url,username,password  (api_url może być puste)
 
-import { parseArgs } from 'node:util';
+import {parseArgs} from 'node:util';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import {spawnSync} from 'node:child_process';
 
 // ---------------------------------------------------------------------------
 // Punktacja (zgodna z sekcją 5 specyfikacji)

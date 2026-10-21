@@ -1,0 +1,139 @@
+@username = admin
+@password = adminadmin
+
+### Create the three demo series and sensors, then print the runner command
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+> {%
+client.test("Admin login succeeds", function () {
+    client.assert(response.status === 200, "Expected 200 OK");
+    client.assert(response.body.accessToken, "Expected an access token");
+});
+client.global.set("demoAuthToken", response.body.accessToken);
+client.global.set("demoTag", $random.hexadecimal(8));
+%}
+
+### Create sinusoidal series
+POST {{baseUrl}}/api/series
+Authorization: Bearer {{demoAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "demo-sinusoidal-{{demoTag}}",
+  "minValue": -20,
+  "maxValue": 100,
+  "color": "#ff0000"
+}
+
+> {%
+client.test("Sinusoidal series created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.id, "Expected series id");
+});
+client.global.set("demoSinusoidalSeriesId", response.body.id);
+%}
+
+### Register sinusoidal sensor
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{demoAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "demo-sinusoidal-sensor-{{demoTag}}",
+  "seriesId": "{{demoSinusoidalSeriesId}}"
+}
+
+> {%
+client.test("Sinusoidal sensor registered", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.apiKey, "Expected sensor API key");
+});
+client.global.set("demoSinusoidalApiKey", response.body.apiKey);
+%}
+
+### Create high-range random-walk series
+POST {{baseUrl}}/api/series
+Authorization: Bearer {{demoAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "demo-random-6000-{{demoTag}}",
+  "minValue": 0,
+  "maxValue": 6000,
+  "color": "#0000ff"
+}
+
+> {%
+client.test("High-range random series created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.id, "Expected series id");
+});
+client.global.set("demoRandom6000SeriesId", response.body.id);
+%}
+
+### Register high-range random-walk sensor
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{demoAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "demo-random-6000-sensor-{{demoTag}}",
+  "seriesId": "{{demoRandom6000SeriesId}}"
+}
+
+> {%
+client.test("High-range random sensor registered", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.apiKey, "Expected sensor API key");
+});
+client.global.set("demoRandom6000ApiKey", response.body.apiKey);
+%}
+
+### Create low-range random-walk series
+POST {{baseUrl}}/api/series
+Authorization: Bearer {{demoAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "demo-random-100-{{demoTag}}",
+  "minValue": 0,
+  "maxValue": 100,
+  "color": "#00aa00"
+}
+
+> {%
+client.test("Low-range random series created", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.id, "Expected series id");
+});
+client.global.set("demoRandom100SeriesId", response.body.id);
+%}
+
+### Register low-range random-walk sensor and print the runner command
+POST {{baseUrl}}/api/sensors
+Authorization: Bearer {{demoAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "demo-random-100-sensor-{{demoTag}}",
+  "seriesId": "{{demoRandom100SeriesId}}"
+}
+
+> {%
+client.test("Low-range random sensor registered", function () {
+    client.assert(response.status === 201, "Expected 201 Created");
+    client.assert(response.body.apiKey, "Expected sensor API key");
+});
+client.global.set("demoRandom100ApiKey", response.body.apiKey);
+
+client.log("./run-three-sensors.sh " + request.environment.get("baseUrl") + " "
+    + client.global.get("demoSinusoidalApiKey") + " "
+    + client.global.get("demoRandom6000ApiKey") + " "
+    + client.global.get("demoRandom100ApiKey"));
+%}
