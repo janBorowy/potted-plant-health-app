@@ -46,7 +46,7 @@ def positive_int(value: str) -> int:
     return parsed
 
 
-def create_parser() -> argparse.ArgumentParser:
+def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate sensor measurements and submit them via POST /api/measurements."
     )
@@ -92,15 +92,11 @@ def validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> 
     if not args.api_key.strip():
         parser.error("API key cannot be blank")
     if not math.isfinite(args.min_value) or not math.isfinite(args.max_value):
-        parser.error("min-value and max-value must be finite numbers")
+        parser.error("invalid min-value or max-value")
     if args.min_value >= args.max_value:
         parser.error("min-value must be less than max-value")
-    if not math.isfinite(args.max_value - args.min_value):
-        parser.error("the range between min-value and max-value must be finite")
-    if math.nextafter(args.min_value, args.max_value) >= args.max_value:
-        parser.error("min-value and max-value do not leave room for a value strictly between them")
     if not math.isfinite(args.variation) or args.variation < 0:
-        parser.error("--variation must be a finite number greater than or equal to zero")
+        parser.error("invalid variation")
 
     if args.mode == "batch":
         missing = [name for name, value in (
@@ -139,7 +135,7 @@ def generate_value(
         min_value: float,
         max_value: float,
         variation: float,
-        rng: random.Random,
+        random: random.Random,
         previous_value: float | None = None,
         phase: float = 0.0,
 ) -> float:
@@ -148,8 +144,8 @@ def generate_value(
 
     lower, upper = interior_bounds(min_value, max_value)
     if previous_value is None:
-        return rng.uniform(lower, upper)
-    return min(max(previous_value + rng.uniform(-variation, variation), lower), upper)
+        return random.uniform(lower, upper)
+    return min(max(previous_value + random.uniform(-variation, variation), lower), upper)
 
 
 def measurement_url(base_url: str) -> str:
@@ -171,7 +167,7 @@ def post_measurement(url: str, api_key: str, value: float, timestamp: datetime) 
             raise RuntimeError(f"API returned unexpected HTTP status {response.status}")
 
 
-def submit(
+def submit_measurement(
         url: str,
         api_key: str,
         value: float,
@@ -192,7 +188,7 @@ def submit(
 
 
 def run_batch(args: argparse.Namespace, url: str) -> None:
-    rng = random.Random()
+    random = random.Random()
     previous_value = None
     count = args.samples
     duration = args.end_time - args.start_time
@@ -207,11 +203,11 @@ def run_batch(args: argparse.Namespace, url: str) -> None:
             args.min_value,
             args.max_value,
             args.variation,
-            rng,
+            random,
             previous_value,
             phase,
         )
-        submit(url, args.api_key, value, timestamp, index + 1)
+        submit_measurement(url, args.api_key, value, timestamp, index + 1)
         previous_value = value
 
 
@@ -241,7 +237,7 @@ def run_realtime(args: argparse.Namespace, url: str) -> None:
                 phase,
             )
             index += 1
-            submit(url, args.api_key, value, timestamp, index)
+            submit_measurement(url, args.api_key, value, timestamp, index)
             previous_value = value
             next_send = time.monotonic() + args.interval
     except KeyboardInterrupt:
@@ -249,7 +245,7 @@ def run_realtime(args: argparse.Namespace, url: str) -> None:
 
 
 def main() -> int:
-    parser = create_parser()
+    parser = create_argument_parser()
     args = parser.parse_args()
     if args.api_key is None:
         args.api_key = os.environ.get("SENSOR_API_KEY")
