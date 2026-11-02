@@ -1,13 +1,21 @@
-
 services:
+
+  sensor-registry-api:
+    build:
+      context: ..
+      dockerfile: docker/sensor-registry-api/dockerfile
+      args:
+        JAR_FILE: build/libs/*-SNAPSHOT.jar
+    ports:
+      - "8080:8080"
+    env_file:
+      - "sensor-registry-api/.env"
+
   mongo:
     image: mongo
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
-      # TODO: remove ports and add app as container before depolyment
-    ports:
-      - "27017:27017"
     volumes:
       - mongo_data:/data/db
 
