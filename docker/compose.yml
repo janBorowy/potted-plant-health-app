@@ -1,13 +1,17 @@
-
 services:
+
+  sensor-registry-api:
+    image: sensor-registry-api:latest
+    ports:
+      - "8080:8080"
+    env_file:
+      - "../.env"
+
   mongo:
     image: mongo
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
-      # TODO: remove ports and add app as container before depolyment
-    ports:
-      - "27017:27017"
     volumes:
       - mongo_data:/data/db
 
