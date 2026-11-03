@@ -1,0 +1,27 @@
+@username = admin
+@password = adminadmin
+
+### Create the three demo series and sensors, then print the runner command
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.test("Admin login succeeds", function () {
+        client.assert(response.status === 200, "Expected 200 OK");
+        client.assert(response.body.accessToken, "Expected an access token");
+    });
+    client.global.set("demoAuthToken", response.body.accessToken);
+    client.global.set("demoTag", $random.hexadecimal(8));
+%}
+
+###
+
+@sensorId = 123
+GET {{baseUrl}}/api/measurements?series=6ae9e935de044be64c0f275e
+    &from=2026-11-03T00:00:00Z
+    &to=2026-11-10T00:00:00Z
