@@ -1,0 +1,1 @@
+docker build -t sensor-registry-api:latest .
