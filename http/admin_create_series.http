@@ -1,5 +1,5 @@
-@username = ${{adminUsername}}
-@password = ${{adminPassword}}
+@username = {{adminUsername}}
+@password = {{adminPassword}}
 @seriesName = TEMP_SENSOR_{{$randomInt}}
 
 ### Creating a series without authentication is rejected

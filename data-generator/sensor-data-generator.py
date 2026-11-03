@@ -188,7 +188,7 @@ def submit_measurement(
 
 
 def run_batch(args: argparse.Namespace, url: str) -> None:
-    random = random.Random()
+    rng = random.Random()
     previous_value = None
     count = args.samples
     duration = args.end_time - args.start_time
@@ -203,7 +203,7 @@ def run_batch(args: argparse.Namespace, url: str) -> None:
             args.min_value,
             args.max_value,
             args.variation,
-            random,
+            rng,
             previous_value,
             phase,
         )
