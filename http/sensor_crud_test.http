@@ -1,5 +1,5 @@
-@username = admin
-@password = adminadmin
+@username = ${{adminUsername}}
+@password = ${{adminPassword}}
 
 ### Setup: random tag that namespaces all data created by this run
 GET {{baseUrl}}/api/health

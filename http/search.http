@@ -1,5 +1,5 @@
-@username = admin
-@password = adminadmin
+@username = ${{adminUsername}}
+@password = ${{adminPassword}}
 
 ### Create the three demo series and sensors, then print the runner command
 POST {{baseUrl}}/api/auth/login
